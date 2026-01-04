@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+         $this->call([
+            UserSeeder::class,       // 1 admin + 3 poznata + 6 random
+            CategorySeeder::class,   // 15 fiksnih kategorija
+            AccountSeeder::class,    // 2 accounta po user-u (Tekuci + Kes)
+            BudgetSeeder::class,     // 4 budžeta po user-u za Feb/Mar 2026
+            TransactionSeeder::class // 4 transakcije po user-u (2 exp, 2 inc)
         ]);
     }
 }
