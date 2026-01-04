@@ -194,6 +194,49 @@ class TransactionController extends Controller
         });
     }
 
+ // deleteTransaction: brisanje transakcije + vraćanje current_balance
+    public function destroy(Request $request, Transaction $transaction)
+    {
+        $userId = $request->user()->id;
 
+        if ($transaction->user_id !== $userId) {
+            abort(403, 'Forbidden.');
+        }
+
+        return DB::transaction(function () use ($transaction, $userId) {
+
+            $account = Account::where('id', $transaction->account_id)
+                ->where('user_id', $userId)
+                ->lockForUpdate()
+                ->first();
+
+                //ako nema taj account ili hoce tudji da azurira
+            if (!$account) {
+                abort(403, 'Forbidden.');
+            }
+
+            $amount = (float) $transaction->amount;
+
+            // poništi efekat transakcije
+            $balance = (float) $account->current_balance;
+            if ($transaction->type === 'income') {
+                $balance -= $amount;
+            } else {
+                $balance += $amount;
+            }
+
+            // u slucaju kada bismo obrisali tu transakciju, a balans je u minusu, ne radimo brisanje
+            if ($balance < 0) {
+                return response()->json([
+                    'message' => 'Cannot delete. Account balance would become negative (data inconsistency).',
+                ], 409);
+            }
+
+            $account->update(['current_balance' => $balance]);
+            $transaction->delete();
+
+            return response()->json(['message' => 'Transaction deleted.']);
+        });
+    }
    
 }
