@@ -17,6 +17,7 @@ class BudgetResource extends JsonResource
             'month' => $this->month,
             'year' => $this->year,
             'planned_amount' => $this->planned_amount,
+            'category' => $this->whenLoaded('category'),
         ];
     }
 }
