@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
     {
          // Admin korisnik
         User::updateOrCreate(
-            ['email' => 'admin@budget.local'],
+            ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin Save Wise',
                 'password' => Hash::make('admin'),
