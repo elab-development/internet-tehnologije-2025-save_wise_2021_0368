@@ -3,7 +3,7 @@ import React from "react";
 const Transactions = () => {
   return (
     <div>
-      Transactions
+      Transactions are more complex, to be added for project
     </div>
   );
 };
