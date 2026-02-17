@@ -6,6 +6,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\AdminMetricsController;
+
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -18,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::put('/categories/{category}', [CategoryController::class, 'update']);
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+    Route::get('/admin/metrics', [AdminMetricsController::class, 'index']);
 
     Route::get('/accounts', [AccountController::class, 'index']);   
     Route::post('/accounts', [AccountController::class, 'store']);

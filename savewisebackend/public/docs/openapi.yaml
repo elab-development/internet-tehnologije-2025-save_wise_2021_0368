@@ -1,0 +1,861 @@
+openapi: 3.0.3
+
+info:
+  title: Save Wise API
+  version: 1.0.0
+  description: >
+    Swagger (OpenAPI) dokumentacija za Save Wise Laravel REST API.
+    Autentifikacija je preko Bearer tokena (Laravel Sanctum).
+    Napomena: /login/user i /login/admin su dokumentacioni aliasi ka pravom /login (vidi index.html).
+
+servers:
+  - url: /api
+    description: Local API
+
+tags:
+  - name: Auth
+    description: Registracija, login, logout.
+  - name: Categories
+    description: Kategorije (GET javno, CRUD admin).
+  - name: Accounts
+    description: Nalozi (ulogovani korisnik).
+  - name: Budgets
+    description: Budžeti (ulogovani korisnik, filteri + paginacija).
+  - name: Transactions
+    description: Transakcije (ulogovani korisnik, filteri + paginacija).
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+
+  schemas:
+    ValidationErrors:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+
+    LaravelValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: The given data was invalid.
+        errors:
+          $ref: "#/components/schemas/ValidationErrors"
+
+    SimpleMessage:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    User:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: "Antonina" }
+        email: { type: string, example: "antonina@gmail.com" }
+        role: { type: string, example: "user" }
+        profile_info: { type: string, nullable: true, example: "Profil info korisnika." }
+
+    AuthRegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, example: "Antonina" }
+        email: { type: string, example: "antonina@gmail.com" }
+        password: { type: string, example: "antonina" }
+
+    AuthLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, example: "antonina@gmail.com" }
+        password: { type: string, example: "antonina" }
+
+    AuthRegisterResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Registracija uspešna." }
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Prijava uspešna." }
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            token:
+              type: string
+              example: "1|s0m3S4nctumT0k3n..."
+
+    AuthErrorResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Neispravni kredencijali." }
+        errors:
+          type: object
+          example:
+            auth:
+              - "Email ili lozinka nisu tačni."
+
+    Account:
+      type: object
+      properties:
+        id: { type: integer, example: 10 }
+        user_id: { type: integer, example: 1 }
+        name: { type: string, example: "Keš" }
+        initial_balance: { type: number, example: 1000 }
+        current_balance: { type: number, example: 850 }
+        currency:
+          type: string
+          enum: [RSD, EUR]
+          example: RSD
+
+    AccountCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Account"
+
+    AccountCreateRequest:
+      type: object
+      required: [name, initial_balance, currency]
+      properties:
+        name: { type: string, example: "Keš" }
+        initial_balance: { type: number, example: 1000 }
+        currency:
+          type: string
+          enum: [RSD, EUR]
+          example: RSD
+
+    Category:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: "Hrana" }
+
+    CategoryCreateUpdateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: "Putovanja" }
+
+    Budget:
+      type: object
+      properties:
+        id: { type: integer, example: 5 }
+        user_id: { type: integer, example: 1 }
+        category_id: { type: integer, example: 2 }
+        name: { type: string, example: "Budžet za hranu" }
+        month: { type: integer, example: 2 }
+        year: { type: integer, example: 2026 }
+        planned_amount: { type: number, example: 25000 }
+        category:
+          $ref: "#/components/schemas/Category"
+
+    BudgetResource:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Budget"
+
+    BudgetCreateRequest:
+      type: object
+      required: [category_id, name, month, year, planned_amount]
+      properties:
+        category_id: { type: integer, example: 2 }
+        name: { type: string, example: "Budžet za hranu" }
+        month: { type: integer, minimum: 1, maximum: 12, example: 2 }
+        year: { type: integer, minimum: 2000, example: 2026 }
+        planned_amount: { type: number, example: 25000 }
+
+    BudgetUpdateRequest:
+      type: object
+      properties:
+        name: { type: string, example: "Izmenjen naziv budžeta" }
+        month: { type: integer, minimum: 1, maximum: 12, example: 3 }
+        year: { type: integer, minimum: 2000, example: 2026 }
+        planned_amount: { type: number, example: 30000 }
+
+    PaginationLinks:
+      type: object
+      properties:
+        first: { type: string, nullable: true }
+        last: { type: string, nullable: true }
+        prev: { type: string, nullable: true }
+        next: { type: string, nullable: true }
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page: { type: integer, example: 1 }
+        from: { type: integer, nullable: true, example: 1 }
+        last_page: { type: integer, example: 3 }
+        path: { type: string, example: "http://127.0.0.1:8000/api/budgets" }
+        per_page: { type: integer, example: 6 }
+        to: { type: integer, nullable: true, example: 6 }
+        total: { type: integer, example: 14 }
+
+    BudgetPaginated:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Budget"
+        links:
+          $ref: "#/components/schemas/PaginationLinks"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    Transaction:
+      type: object
+      properties:
+        id: { type: integer, example: 42 }
+        user_id: { type: integer, example: 1 }
+        account_id: { type: integer, example: 10 }
+        category_id: { type: integer, example: 2 }
+        amount: { type: number, example: 1200 }
+        date: { type: string, format: date, example: "2026-02-17" }
+        description: { type: string, nullable: true, example: "Ručak" }
+        type:
+          type: string
+          enum: [income, expense]
+          example: expense
+
+    TransactionResource:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Transaction"
+
+    TransactionCreateRequest:
+      type: object
+      required: [account_id, category_id, amount, date, type]
+      properties:
+        account_id: { type: integer, example: 10 }
+        category_id: { type: integer, example: 2 }
+        amount: { type: number, example: 1200 }
+        date: { type: string, format: date, example: "2026-02-17" }
+        description: { type: string, nullable: true, example: "Ručak" }
+        type:
+          type: string
+          enum: [income, expense]
+          example: expense
+
+    TransactionUpdateRequest:
+      type: object
+      properties:
+        category_id: { type: integer, example: 3 }
+        amount: { type: number, example: 1500 }
+        date: { type: string, format: date, example: "2026-02-18" }
+        description: { type: string, nullable: true, example: "Izmena opisa" }
+        type:
+          type: string
+          enum: [income, expense]
+          example: expense
+
+    TransactionPaginated:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        links:
+          $ref: "#/components/schemas/PaginationLinks"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Registracija korisnika.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRegisterRequest"
+      responses:
+        "201":
+          description: Uspešna registracija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRegisterResponse"
+        "422":
+          description: Validacija nije prošla.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LaravelValidationError"
+                  - $ref: "#/components/schemas/AuthErrorResponse"
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Login (jedan endpoint u backendu).
+      description: Nakon uspešnog logina, kopiraj token i stavi ga u Authorize (Bearer).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+            examples:
+              user:
+                summary: Običan korisnik.
+                value: { email: "antonina@gmail.com", password: "antonina" }
+              admin:
+                summary: Admin korisnik.
+                value: { email: "admin@budget.local", password: "admin" }
+      responses:
+        "200":
+          description: Uspešan login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+        "401":
+          description: Neispravni kredencijali.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+        "422":
+          description: Validacija nije prošla.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LaravelValidationError"
+                  - $ref: "#/components/schemas/AuthErrorResponse"
+
+  /login/user:
+    post:
+      tags: [Auth]
+      summary: Login (alias) – običan korisnik.
+      description: Dokumentacioni alias ka /login. Radi preko requestInterceptor-a u index.html.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+            example: { email: "antonina@gmail.com", password: "antonina" }
+      responses:
+        "200":
+          description: Uspešan login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+
+  /login/admin:
+    post:
+      tags: [Auth]
+      summary: Login (alias) – admin.
+      description: Dokumentacioni alias ka /login. Radi preko requestInterceptor-a u index.html.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+            example: { email: "admin@budget.local", password: "admin" }
+      responses:
+        "200":
+          description: Uspešan login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+
+  /logout:
+    post:
+      tags: [Auth]
+      summary: Logout (briše trenutni token).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Uspešan logout.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Odjava uspešna." }
+        "401":
+          description: Token nedostaje ili nije validan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: "Token nije validan." }
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Lista kategorija (javno).
+      security: []
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      tags: [Categories]
+      summary: Kreiranje kategorije (admin).
+      description: Admin-only. Backend proverava admina (npr. user_type === 'admin').
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryCreateUpdateRequest"
+      responses:
+        "201":
+          description: Kreirano.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Jedna kategorija.
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+    put:
+      tags: [Categories]
+      summary: Izmena kategorije (admin).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryCreateUpdateRequest"
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+    delete:
+      tags: [Categories]
+      summary: Brisanje kategorije (admin).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "409":
+          description: Konflikt (kategorija se koristi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+
+  /accounts:
+    get:
+      tags: [Accounts]
+      summary: Moji nalozi (ulogovan korisnik).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountCollection"
+    post:
+      tags: [Accounts]
+      summary: Kreiraj nalog (ulogovan korisnik).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountCreateRequest"
+      responses:
+        "201":
+          description: Kreirano.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Account"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+
+  /budgets:
+    get:
+      tags: [Budgets]
+      summary: Moji budžeti (filteri + paginacija).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: month
+          schema: { type: integer, minimum: 1, maximum: 12 }
+        - in: query
+          name: year
+          schema: { type: integer, minimum: 2000 }
+        - in: query
+          name: category_id
+          schema: { type: integer }
+        - in: query
+          name: category_name
+          schema: { type: string }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 100, example: 6 }
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetPaginated"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+    post:
+      tags: [Budgets]
+      summary: Kreiraj budžet.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetCreateRequest"
+      responses:
+        "201":
+          description: Kreirano.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetResource"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+
+  /budgets/{id}:
+    put:
+      tags: [Budgets]
+      summary: Izmeni budžet (samo svoj).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetUpdateRequest"
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetResource"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+    delete:
+      tags: [Budgets]
+      summary: Obriši budžet (samo svoj).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Moje transakcije (filteri + paginacija).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string, enum: [income, expense] }
+        - in: query
+          name: category_id
+          schema: { type: integer }
+        - in: query
+          name: category_name
+          schema: { type: string }
+        - in: query
+          name: min_amount
+          schema: { type: number, minimum: 0 }
+        - in: query
+          name: max_amount
+          schema: { type: number, minimum: 0 }
+        - in: query
+          name: date_sort
+          schema: { type: string, enum: [newest, oldest] }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 100, example: 10 }
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionPaginated"
+        "422":
+          description: Validacija.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaravelValidationError"
+    post:
+      tags: [Transactions]
+      summary: Kreiraj transakciju (update balansa).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionCreateRequest"
+      responses:
+        "201":
+          description: Kreirano.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResource"
+        "422":
+          description: Validacija ili nedovoljno sredstava.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LaravelValidationError"
+                  - $ref: "#/components/schemas/SimpleMessage"
+        "403":
+          description: Forbidden (tuđi account).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+
+  /transactions/{id}:
+    put:
+      tags: [Transactions]
+      summary: Izmeni transakciju (korekcija balansa).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionUpdateRequest"
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResource"
+        "422":
+          description: Validacija ili nedovoljno sredstava.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LaravelValidationError"
+                  - $ref: "#/components/schemas/SimpleMessage"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+    delete:
+      tags: [Transactions]
+      summary: Obriši transakciju (vraćanje balansa).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
+        "409":
+          description: Konflikt (brisanje bi dovelo do negativnog balansa / nekonzistentnosti).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleMessage"
