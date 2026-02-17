@@ -47,6 +47,7 @@ const Navigation = ({ token, user, isAuthenticated, role, onLogoutLocal }) => {
         <>
           <Link to="/admin">Home</Link>
           <Link to="/admin/categories">Categories Management</Link>
+          <Link to="/admin/metrics">Admin Metrics</Link>
         </>
       )}
 

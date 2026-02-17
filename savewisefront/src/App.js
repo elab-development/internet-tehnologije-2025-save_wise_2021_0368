@@ -7,6 +7,7 @@ import Navigation from "./Components/Navigation"
 
 import UserHome from "./Pages/UserHome";
 import AdminHome from "./Pages/AdminHome";
+import AdminMetrics from "./Pages/AdminMetrics";
 
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
@@ -139,6 +140,14 @@ export default function App() {
           element={
             <RequireRole allowed={["admin"]}>
               <CategoriesManagement user={user} token={token} />
+            </RequireRole>
+          }
+        />
+         <Route
+          path="/admin/metrics"
+          element={
+            <RequireRole allowed={["admin"]}>
+              <AdminMetrics token={token} />
             </RequireRole>
           }
         />
