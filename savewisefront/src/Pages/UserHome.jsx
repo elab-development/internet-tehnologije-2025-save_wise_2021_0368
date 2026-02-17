@@ -13,26 +13,31 @@ const UserHome = () => {
           to: "/accounts-budgets",
         },
         {
-          title: "Transactions.",
+          title: "Transactions",
           description: "Add income/expenses and keep your balance updated.",
           to: "/transactions",
         },
         {
-          title: "Categories.",
+          title: "Categories",
           description: "Browse available categories for better tracking.",
           to: "/accounts-budgets"
+        },
+        {
+          title: "Holidays",
+          description: "See public holidays and plan your savings.",
+          to: "/holidays",
         },
       ]}
       images={[
         {
           src: "/image2.jpg",
-          badge: "Plan.",
+          badge: "Plan",
           caption: "Budgets that work.",
           alt: "SaveWise image 2",
         },
         {
           src: "/image1.jpg",
-          badge: "Grow.",
+          badge: "Grow",
           caption: "Save smarter.",
           alt: "SaveWise image 1",
         },
