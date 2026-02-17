@@ -55,6 +55,7 @@ const Navigation = ({ token, user, isAuthenticated, role, onLogoutLocal }) => {
           <Link to="/home">Home</Link>
           <Link to="/accounts-budgets">Accounts & Budgets</Link>
           <Link to="/transactions">Transactions</Link>
+          <Link to="/holidays">Holidays</Link>
         </>
       )}
 

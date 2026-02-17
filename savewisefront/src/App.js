@@ -13,6 +13,7 @@ import Register from "./Pages/Register";
 import AccountsBudgets from "./Pages/AccountsBudgets";
 import CategoriesManagement from "./Pages/CategoriesManagement";
 import Transactions from "./Pages/Transactions";
+import Holidays from "./Pages/Holidays";
 
 const TOKEN_KEY = "savewise_token";
 const USER_KEY = "savewise_user";
@@ -112,6 +113,14 @@ export default function App() {
           element={
             <RequireRole allowed={["user"]}>
               <Transactions user={user} token={token} />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/holidays"
+          element={
+            <RequireRole allowed={["user"]}>
+              <Holidays/>
             </RequireRole>
           }
         />
