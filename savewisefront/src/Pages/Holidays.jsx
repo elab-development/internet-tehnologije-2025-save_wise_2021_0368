@@ -31,7 +31,7 @@ function buildMonthGrid(year, monthIndex) {
   return cells;
 }
 
-export default function HolidayCalendarPage() {
+export default function Holidays() {
   const now = new Date();
   const [countryCode, setCountryCode] = useState("RS");
   const [year, setYear] = useState(now.getFullYear());
