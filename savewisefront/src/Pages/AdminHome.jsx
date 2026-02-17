@@ -11,6 +11,11 @@ const AdminHome = () => {
           title: "Categories Management",
           description: "Create, edit and remove categories for the whole system.",
           to: "/admin/categories",
+        },
+        {
+          title: "Metrics",
+          description: "Charts and simple statistics for the whole system.",
+          to: "/admin/metrics",
         }
         
       ]}
